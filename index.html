@@ -79,14 +79,14 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid var(--li
 const LIVE_URL="https://keithowns.github.io/Moxie/";
 const TS="1 capsule · take with a snack or milk";
 const SLOTS=[
- {t:"8:00 AM",l:"Breakfast",i:[["keflex1","Keflex 500mg","1 capsule · food helps if stomach is upset",0],["colace1","Colace 100mg","1 capsule · with a full glass of water",0],["jour1","Journavax","1 tab · with or without food",0],["medrol1","Medrol pack","",1,"bf"]]},
- {t:"9:00 AM",l:"",i:[["tor1","Toradol 10mg",TS,1]]},
- {t:"1:00 PM",l:"After lunch",i:[["keflex2","Keflex 500mg","1 capsule · food helps if stomach is upset",0],["medrol2","Medrol pack","",1,"lunch"]]},
- {t:"3:00 PM",l:"",i:[["tor2","Toradol 10mg",TS,1]]},
- {t:"6:00 PM",l:"Dinner",i:[["keflex3","Keflex 500mg","1 capsule · food helps if stomach is upset",0],["colace2","Colace 100mg","1 capsule · with a full glass of water",0],["jour2","Journavax","1 tab · with or without food",0],["medrol3","Medrol pack","",1,"supper"]]},
- {t:"9:00 PM",l:"",i:[["tor3","Toradol 10mg",TS,1]]},
- {t:"10:00 PM",l:"Bedtime",i:[["keflex4","Keflex 500mg","1 capsule · food helps if stomach is upset",0],["medrol4","Medrol pack","",1,"bed"]]},
- {t:"3:00 AM",l:"Overnight",i:[["tor4","Toradol 10mg",TS,1]]}
+ {t:"8:00 AM",l:"Breakfast",i:[["keflex1","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["colace1","Colace - Stool softener","1 capsule · with a full glass of water",0],["jour1","Journavax - Pain relief","1 tab · with or without food",0],["medrol1","Medrol pack - Anti-inflammatory","",1,"bf"]]},
+ {t:"9:00 AM",l:"",i:[["tor1","Toradol - Pain & swelling",TS,1]]},
+ {t:"1:00 PM",l:"After lunch",i:[["keflex2","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["medrol2","Medrol pack - Anti-inflammatory","",1,"lunch"]]},
+ {t:"3:00 PM",l:"",i:[["tor2","Toradol - Pain & swelling",TS,1]]},
+ {t:"6:00 PM",l:"Dinner",i:[["keflex3","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["colace2","Colace - Stool softener","1 capsule · with a full glass of water",0],["jour2","Journavax - Pain relief","1 tab · with or without food",0],["medrol3","Medrol pack - Anti-inflammatory","",1,"supper"]]},
+ {t:"9:00 PM",l:"",i:[["tor3","Toradol - Pain & swelling",TS,1]]},
+ {t:"10:00 PM",l:"Bedtime",i:[["keflex4","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["medrol4","Medrol pack - Anti-inflammatory","",1,"bed"]]},
+ {t:"3:00 AM",l:"Overnight",i:[["tor4","Toradol - Pain & swelling",TS,1]]}
 ];
 const MED={1:{bf:2,lunch:1,supper:1,bed:2},2:{bf:1,lunch:1,supper:1,bed:2},3:{bf:1,lunch:1,supper:1,bed:1},4:{bf:1,lunch:1,bed:1},5:{bf:1,bed:1},6:{bf:1}};
 const KM={bf:"before breakfast, with food",lunch:"after lunch",supper:"after supper",bed:"at bedtime, with a snack"};
@@ -106,8 +106,8 @@ function medN(k){return (MED[packDay()]||{})[k]||0}
 function items(s){return s.i.filter(x=>!x[4]||medN(x[4])>0)}
 function total(){return SLOTS.reduce((a,s)=>a+items(s).length,0)}
 const PRN=[
- {id:"oxy",n:"Oxycodone-Acet 5-325mg",d:"1–2 tabs, as needed, at least 6 hours apart"},
- {id:"ond",n:"Ondansetron ODT 4mg",d:"1 tab for nausea, at least 6 hours apart"}
+ {id:"oxy",n:"Oxycodone-Acet - Strong pain",d:"1–2 tabs, as needed, at least 6 hours apart"},
+ {id:"ond",n:"Ondansetron ODT - Nausea",d:"1 tab for nausea, at least 6 hours apart"}
 ];
 const KEY="medtracker-v1";
 const today=()=>new Date().toDateString();
