@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Offline Progressive Web App support via `manifest.json`, `sw.js` Service Worker, and custom home screen icons (`icon-180.png`, `icon-192.png`, `icon-512.png`).
 - Shareable iPhone launcher files (`Install Med Tracker Home Screen Icon.mobileconfig`, `Open Medication Tracker.webloc`, `Open Medication Tracker.url`, and `Medication Tracker QR Code.png`).
 - `chat_summary.html` documenting the iPhone web app troubleshooting and deployment workflow.
+- Password lock screen (`SHA-256` verification with persistent `localStorage` unlock state) on `index.html` and `Medication Tracker.html`.
 
 ### Changed
 - Enhanced `Medication Tracker.html` with automatic local file preview detection to break out of iOS Quick Look into Safari and preserve `localStorage` state.

@@ -16,9 +16,9 @@
 <title>Medication Tracker</title>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
---bg:#f5f7fa;--card:#fff;--text:#1c2430;--muted:#667085;--line:#e2e7ee;--accent:#2563eb;--done:#16a34a;--donebg:#e8f6ee;--warn:#b45309}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f141b;--card:#18202a;--text:#e8edf3;--muted:#98a2b3;--line:#2a3441;--accent:#60a5fa;--done:#4ade80;--donebg:#16301f;--warn:#fbbf24;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#0f141b;--card:#18202a;--text:#e8edf3;--muted:#98a2b3;--line:#2a3441;--accent:#60a5fa;--done:#4ade80;--donebg:#16301f;--warn:#fbbf24;color-scheme:dark}
+--bg:#f5f7fa;--card:#fff;--text:#1c2430;--muted:#667085;--line:#e2e7ee;--accent:#2563eb;--done:#16a34a;--donebg:#e8f6ee;--warn:#b45309;--err:#dc2626}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f141b;--card:#18202a;--text:#e8edf3;--muted:#98a2b3;--line:#2a3441;--accent:#60a5fa;--done:#4ade80;--donebg:#16301f;--warn:#fbbf24;--err:#f87171;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f141b;--card:#18202a;--text:#e8edf3;--muted:#98a2b3;--line:#2a3441;--accent:#60a5fa;--done:#4ade80;--donebg:#16301f;--warn:#fbbf24;--err:#f87171;color-scheme:dark}
 /* iOS specific touch improvements */
 * { -webkit-tap-highlight-color: transparent; }
 button, label.row, input[type=checkbox], select, a.btn { touch-action: manipulation; cursor: pointer; }
@@ -26,6 +26,13 @@ button, label.row, input[type=checkbox], select, a.btn { touch-action: manipulat
 html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:560px;margin:0 auto;padding:16px}
+[hidden]{display:none!important}
+.lock-wrap{max-width:400px;margin:60px auto;padding:24px 20px;background:var(--card);border:1px solid var(--line);border-radius:16px;text-align:center}
+.lock-wrap h1{font-size:22px;margin:0 0 6px}
+.lock-wrap p{color:var(--muted);font-size:14px;margin:0 0 16px}
+.lock-form{display:flex;gap:8px}
+.lock-form input{flex:1;font:16px/1.2 inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);min-height:44px;box-sizing:border-box}
+.lock-err{color:var(--err);font-size:13px;margin-top:10px;min-height:18px}
 h1{font-size:22px;margin:4px 0}
 .sub{color:var(--muted);font-size:14px;margin-bottom:12px}
 .banner{background:var(--card);border:2px solid var(--accent);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14px}
@@ -59,10 +66,23 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid var(--li
 .packbar{margin-bottom:12px;font-size:15px}.packbar select{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text)}
 .fd{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:2px 6px;color:var(--warn);white-space:nowrap}
 .note{font-size:13px;color:var(--muted);margin-top:16px}
+.foot-actions{display:flex;gap:8px;flex-wrap:wrap}
 </style>
 </head>
 <body>
-<main>
+<div id="lock-screen" style="padding:16px">
+ <div class="lock-wrap">
+  <h1>🔒 Medication Tracker</h1>
+  <p>Enter password to unlock</p>
+  <form class="lock-form" id="lock-form">
+   <input type="password" id="pw-input" placeholder="Password" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" required>
+   <button type="submit">Unlock</button>
+  </form>
+  <div class="lock-err" id="lock-err"></div>
+ </div>
+</div>
+
+<main id="app-main" hidden>
 <div id="env-banner"></div>
 <h1>💊 Medication Tracker</h1>
 <div class="sub" id="date"></div>
@@ -72,11 +92,84 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid var(--li
 <div id="slots"></div>
 <h2>As needed</h2>
 <div id="prn"></div>
-<button class="ghost" id="reset">Reset today</button>
+<div class="foot-actions">
+ <button class="ghost" id="reset">Reset today</button>
+ <button class="ghost" id="lock-btn">Lock</button>
+</div>
 <p class="note">Based on the medication sheet you photographed; check it against your original and your pharmacist’s instructions. Medrol tablet counts come from the pack’s dosing chart; set today’s pack day above. Don’t take other acetaminophen (Tylenol) products with Oxycodone-Acet.</p>
 </main>
 <script>
 const LIVE_URL="https://keithowns.github.io/Moxie/";
+const AUTH_KEY="medtracker-auth-v1";
+const PASS_HASH="19a1c03cd29484828885a3bc760124fb9ba864c0a4c94dddb3e791bb1592e1a3";
+
+function sha256(ascii){
+ function rr(v,a){return(v>>>a)|(v<<(32-a))}
+ const mathPow=Math.pow,maxWord=mathPow(2,32),result=[];
+ let i,j,words=[],asciiBitLength=ascii.length*8;
+ let hash=[],k=[],primeCounter=0, isComposite={};
+ for(let candidate=2;primeCounter<64;candidate++){
+  if(!isComposite[candidate]){
+   for(i=0;i<313;i+=candidate)isComposite[i]=candidate;
+   hash[primeCounter]=(mathPow(candidate,.5)*maxWord)|0;
+   k[primeCounter++]=(mathPow(candidate,1/3)*maxWord)|0;
+  }
+ }
+ ascii+="\x80";
+ while(ascii.length%64-56)ascii+="\x00";
+ for(i=0;i<ascii.length;i++){
+  j=ascii.charCodeAt(i);
+  words[i>>2]|=j<<((3-i)%4)*8;
+ }
+ words[words.length]=((asciiBitLength/maxWord)|0);
+ words[words.length]=(asciiBitLength);
+ for(j=0;j<words.length;){
+  const w=words.slice(j,j+=16),oldHash=hash;
+  hash=hash.slice(0,8);
+  for(i=0;i<64;i++){
+   const i2=i+j,w15=w[i-15],w2=w[i-2];
+   const a=hash[0],e=hash[4];
+   const temp1=hash[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&hash[5])^((~e)&hash[6]))+k[i]+(w[i]=(i<16)?w[i]:(w[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+w[i-7]+(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0);
+   const temp2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
+   hash=[(temp1+temp2)|0].concat(hash);
+   hash[4]=(hash[4]+temp1)|0;
+  }
+  for(i=0;i<8;i++)hash[i]=(hash[i]+oldHash[i])|0;
+ }
+ for(i=0;i<8;i++){
+  for(j=3;j+1;j--){
+   const b=(hash[i]>>(j*8))&255;
+   result.push((b<16?"0":"")+b.toString(16));
+  }
+ }
+ return result.join("");
+}
+
+function setUnlocked(unlocked){
+ document.getElementById("lock-screen").hidden=unlocked;
+ document.getElementById("app-main").hidden=!unlocked;
+}
+try{
+ if(localStorage.getItem(AUTH_KEY)===PASS_HASH)setUnlocked(true);
+}catch(e){}
+
+document.getElementById("lock-form").addEventListener("submit",e=>{
+ e.preventDefault();
+ const raw=(document.getElementById("pw-input").value||"").trim().toLowerCase();
+ if(sha256(raw)===PASS_HASH){
+  try{localStorage.setItem(AUTH_KEY,PASS_HASH)}catch(err){}
+  document.getElementById("pw-input").value="";
+  document.getElementById("lock-err").textContent="";
+  setUnlocked(true);
+ }else{
+  document.getElementById("lock-err").textContent="Incorrect password. Please try again.";
+ }
+});
+document.getElementById("lock-btn").onclick=()=>{
+ try{localStorage.removeItem(AUTH_KEY)}catch(e){}
+ setUnlocked(false);
+};
+
 const TS="1 capsule · take with a snack or milk";
 const SLOTS=[
  {t:"8:00 AM",l:"Breakfast",i:[["keflex1","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["colace1","Colace - Stool softener","1 capsule · with a full glass of water",0],["jour1","Journavax - Pain relief","1 tab · with or without food",0],["medrol1","Medrol pack - Anti-inflammatory","",1,"bf"]]},
@@ -180,4 +273,3 @@ if("serviceWorker" in navigator&&(location.protocol==="https:"||location.protoco
 </script>
 </body>
 </html>
-
