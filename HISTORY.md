@@ -15,3 +15,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Enhanced `Medication Tracker.html` with automatic local file preview detection to break out of iOS Quick Look into Safari and preserve `localStorage` state.
+
