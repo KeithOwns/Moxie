@@ -36,9 +36,10 @@ main{max-width:560px;margin:0 auto;padding:8px 10px}
 .lock-form{display:flex;gap:6px}
 .lock-form input{flex:1;font:16px/1.2 inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);min-height:38px;box-sizing:border-box}
 .lock-err{color:var(--err);font-size:12px;margin-top:8px;min-height:16px}
-.top-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+.top-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;gap:8px}
 h1{font-size:18px;margin:0}
-.sub{color:var(--muted);font-size:12.5px}
+.sub{color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
+.mem-pill{font-size:11px;color:var(--done);background:var(--donebg);border:1px solid var(--done);border-radius:6px;padding:1px 6px;white-space:nowrap}
 .banner{background:var(--card);border:1.5px solid var(--accent);border-radius:10px;padding:8px 10px;margin-bottom:8px;font-size:12.5px}
 .banner.ok{border-color:var(--done);background:var(--donebg)}
 .banner b{display:block;margin-bottom:2px;font-size:13.5px}
@@ -51,8 +52,8 @@ a.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--
 .bar i{display:block;height:100%;width:0;background:var(--done);transition:width .3s}
 .meta-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0 6px;font-size:12.5px}
 .prog{color:var(--muted)}
-.packbar{white-space:nowrap}.packbar select{font:inherit;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--text)}
-h2{font-size:13.5px;margin:6px 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.packbar{white-space:nowrap}.packbar select{font:inherit;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+h2{font-size:13px;margin:6px 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
 .prn{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-bottom:5px}
 .prn-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .prn-info{flex:1;min-width:0;cursor:pointer}
@@ -99,22 +100,23 @@ input[type=checkbox]{width:20px;height:20px;accent-color:var(--done);flex:none;m
 <div id="env-banner"></div>
 <div class="top-head">
  <h1>💊 Medication Tracker</h1>
- <div class="sub" id="date"></div>
+ <div class="sub"><span id="date"></span><span class="mem-pill" id="mem-status">💾 Saved</span></div>
 </div>
 <div class="bar"><i id="fill"></i></div>
 <div class="meta-row">
  <div class="prog" id="prog"></div>
- <div class="packbar">Medrol: <select id="day"></select></div>
+ <div class="packbar">Schedule: <select id="day"></select></div>
 </div>
-<h2>As needed (tap to slate into today’s schedule)</h2>
+<h2>As needed (tap to slate into day’s schedule)</h2>
 <div id="prn"></div>
-<h2>Daily schedule</h2>
+<h2 id="sched-heading">Daily schedule</h2>
 <div id="slots"></div>
 <div class="foot-actions">
- <button class="ghost" id="reset">Reset today</button>
+ <button class="ghost" id="reset">Reset this day</button>
+ <button class="ghost" id="reset-all">Reset all days</button>
  <button class="ghost" id="lock-btn">Lock</button>
 </div>
-<p class="note">Based on the medication sheet you photographed; check it against your original and your pharmacist’s instructions. Medrol tablet counts come from the pack’s dosing chart; set today’s pack day above. Don’t take other acetaminophen (Tylenol) products with Oxycodone-Acet.</p>
+<p class="note">Based on the medication sheet you photographed; check it against your original and your pharmacist’s instructions. Medrol tablet counts come from the pack’s dosing chart; each day in the selector above saves its own independent checkmarks and as-needed doses in memory. Don’t take other acetaminophen (Tylenol) products with Oxycodone-Acet.</p>
 </main>
 <script>
 const LIVE_URL="https://keithowns.github.io/Moxie/";
@@ -201,30 +203,76 @@ const SLOTS=[
 ];
 const MED={1:{bf:2,lunch:1,supper:1,bed:2},2:{bf:1,lunch:1,supper:1,bed:2},3:{bf:1,lunch:1,supper:1,bed:1},4:{bf:1,lunch:1,bed:1},5:{bf:1,bed:1},6:{bf:1}};
 const KM={bf:"before breakfast, with food",lunch:"after lunch",supper:"after supper",bed:"at bedtime, with a snack"};
-const PK="medpack-start";
-let START=null;
+const PRN=[
+ {id:"oxy",n:"Oxycodone-Acet - Strong pain",d:"1–2 tabs, as needed, at least 6 hours apart"},
+ {id:"ond",n:"Ondansetron ODT - Nausea",d:"1 tab for nausea, at least 6 hours apart"}
+];
+
+const STORE_KEY="medtracker-days-v2";
+const LEGACY_KEY="medtracker-v1";
+const today=()=>new Date().toDateString();
+
 let storageOK=false;
 try{
  localStorage.setItem("__t","1");
  localStorage.removeItem("__t");
  storageOK=true;
- START=+localStorage.getItem(PK)||null;
 }catch(e){}
-function mid(){const t=new Date();t.setHours(0,0,0,0);return t.getTime()}
-if(!START){START=mid();try{localStorage.setItem(PK,START)}catch(e){}}
-function packDay(){return Math.round((mid()-START)/864e5)+1}
-function medN(k){return (MED[packDay()]||{})[k]||0}
-function items(s){return s.i.filter(x=>!x[4]||medN(x[4])>0)}
-function total(){return SLOTS.reduce((a,s)=>a+items(s).length,0)}
-const PRN=[
- {id:"oxy",n:"Oxycodone-Acet - Strong pain",d:"1–2 tabs, as needed, at least 6 hours apart"},
- {id:"ond",n:"Ondansetron ODT - Nausea",d:"1 tab for nausea, at least 6 hours apart"}
-];
-const KEY="medtracker-v1";
-const today=()=>new Date().toDateString();
-let S={date:today(),done:{},prn:{}};
-try{const r=JSON.parse(localStorage.getItem(KEY)||"null");if(r&&r.date===today())S=r}catch(e){}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+function emptyDays(){
+ const d={};
+ for(let i=1;i<=7;i++)d[String(i)]={done:{},prn:{}};
+ return d;
+}
+
+let STORE={activeDay:1,lastDate:today(),days:emptyDays()};
+
+// Load per-day memory store (and migrate legacy Day 1 data if present)
+try{
+ const raw=JSON.parse(localStorage.getItem(STORE_KEY)||"null");
+ if(raw&&raw.days){
+  STORE.activeDay=Math.min(Math.max(+raw.activeDay||1,1),7);
+  STORE.lastDate=raw.lastDate||today();
+  for(let i=1;i<=7;i++){
+   const k=String(i);
+   const src=raw.days[k]||{};
+   STORE.days[k]={
+    done:(src.done&&typeof src.done==="object")?src.done:{},
+    prn:(src.prn&&typeof src.prn==="object")?src.prn:{}
+   };
+  }
+ }else{
+  const leg=JSON.parse(localStorage.getItem(LEGACY_KEY)||"null");
+  if(leg&&(leg.done||leg.prn)){
+   STORE.days["1"]={done:leg.done||{},prn:leg.prn||{}};
+  }
+ }
+}catch(e){}
+
+function packDay(){return STORE.activeDay}
+function dayData(d){
+ const k=String(d||STORE.activeDay);
+ if(!STORE.days[k])STORE.days[k]={done:{},prn:{}};
+ return STORE.days[k];
+}
+function medNForDay(d,k){return (MED[d]||{})[k]||0}
+function itemsForDay(d,s){return s.i.filter(x=>!x[4]||medNForDay(d,x[4])>0)}
+function totalForDay(d){return SLOTS.reduce((a,s)=>a+itemsForDay(d,s).length,0)}
+function doneCountForDay(d){
+ const st=dayData(d);
+ return SLOTS.reduce((a,s)=>a+itemsForDay(d,s).filter(x=>st.done[x[0]]).length,0);
+}
+
+function save(){
+ try{
+  localStorage.setItem(STORE_KEY,JSON.stringify(STORE));
+  const pill=document.getElementById("mem-status");
+  if(pill){
+   pill.textContent="💾 Saved Day "+STORE.activeDay;
+  }
+ }catch(e){}
+}
+
 const fmt=ts=>new Date(ts).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
 function fmtName(str,cls){
  const idx=str.indexOf(" - ");
@@ -251,30 +299,52 @@ function sortMinutesFromTs(ts){
  }
 })();
 
-function render(){
- const dsel=document.getElementById("day");dsel.value=String(Math.min(Math.max(packDay(),1),7));
- document.getElementById("date").textContent=new Date().toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"});
+function renderDaySelect(){
+ const dsel=document.getElementById("day");
+ let o="";
+ for(let i=1;i<=7;i++){
+  const c=doneCountForDay(i),tot=totalForDay(i);
+  const prnList=dayData(i).prn||{};
+  const prnCount=Object.values(prnList).reduce((a,arr)=>a+(arr?arr.length:0),0);
+  const label=i<=6?`Day ${i}`:`Day 7 (Post-Medrol)`;
+  const progTag=(c>0||prnCount>0)?` (${c}/${tot}${c===tot?" ✓":""})`:` (0/${tot})`;
+  o+=`<option value="${i}" ${i===STORE.activeDay?"selected":""}>${label}${progTag}</option>`;
+ }
+ dsel.innerHTML=o;
+ dsel.value=String(STORE.activeDay);
+}
 
- // Render As-Needed controls at top
+function render(){
+ const curDay=STORE.activeDay;
+ const cur=dayData(curDay);
+ renderDaySelect();
+
+ document.getElementById("date").textContent=new Date().toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"});
+ document.getElementById("sched-heading").textContent=`Day ${curDay} schedule`;
+ document.getElementById("reset").textContent=`Reset Day ${curDay}`;
+ const pill=document.getElementById("mem-status");
+ if(pill)pill.textContent=`💾 Day ${curDay} saved`;
+
+ // Render As-Needed controls at top for the currently selected day
  let p="";
  PRN.forEach(m=>{
-  const L=S.prn[m.id]||[];const last=L[L.length-1];
+  const L=cur.prn[m.id]||[];const last=L[L.length-1];
   let st="";
-  if(last){const nx=last+6*3600e3;st=`Last: ${fmt(last)} · `+(Date.now()>=nx?"OK to take again":`<span class="w">next eligible at ${fmt(nx)}</span>`)}
+  if(last){const nx=last+6*3600e3;st=`Last on Day ${curDay}: ${fmt(last)} · `+(Date.now()>=nx?"OK to take again":`<span class="w">next eligible at ${fmt(nx)}</span>`)}
   p+=`<div class="prn"><div class="prn-top"><div class="prn-info" data-prn="${m.id}"><b>${fmtName(m.n,"p-prn")}</b><small>${m.d}</small></div><div class="prn-btns"><button data-prn="${m.id}">+ Slate now</button>${L.length?`<button class="ghost" data-undo="${m.id}">Undo</button>`:""}</div></div>${st?`<div class="log">${st}</div>`:""}</div>`;
  });
  document.getElementById("prn").innerHTML=p;
 
- // Build chronological timeline entries combining fixed SLOTS + slated PRN doses
+ // Build chronological timeline entries for curDay combining fixed SLOTS + curDay's slated PRN doses
  let n=0;
  const entries=[];
  SLOTS.forEach(s=>{
-  const it=items(s);if(!it.length)return;
-  const c=it.filter(x=>S.done[x[0]]).length;n+=c;
+  const it=itemsForDay(curDay,s);if(!it.length)return;
+  const c=it.filter(x=>cur.done[x[0]]).length;n+=c;
   let rows="";
   it.forEach(x=>{
-   const d=S.done[x[0]];
-   let desc=x[2];if(x[4]){const q=medN(x[4]);desc=`${q} tablet${q>1?"s":""} · pack day ${packDay()}, ${KM[x[4]]}`}
+   const d=cur.done[x[0]];
+   let desc=x[2];if(x[4]){const q=medNForDay(curDay,x[4]);desc=`${q} tablet${q>1?"s":""} · pack day ${curDay}, ${KM[x[4]]}`}
    const pCls=x[3]?"p-food":"p-nofood";
    rows+=`<label class="row ${d?"on":""}"><input type="checkbox" data-id="${x[0]}" ${d?"checked":""}><span class="nm"><strong>${fmtName(x[1],pCls)}</strong><small>${desc}</small></span>${x[3]?'<span class="fd">🍽 food</span>':""}${d?`<span class="ts">${fmt(d)}</span>`:""}</label>`;
   });
@@ -284,13 +354,13 @@ function render(){
   });
  });
 
- // Add taken PRN doses and next-eligible (6h) slated PRN slot into the chronological schedule
+ // Add taken PRN doses and next-eligible (6h) slated PRN slot into curDay's chronological schedule
  PRN.forEach(m=>{
-  const L=S.prn[m.id]||[];
+  const L=cur.prn[m.id]||[];
   L.forEach((ts,idx)=>{
    entries.push({
     sortM:sortMinutesFromTs(ts)+0.1,
-    html:`<div class="slot all prn-slot"><div class="sh"><b>${fmt(ts)}</b><span>As needed · logged</span></div><label class="row on"><input type="checkbox" data-prn-remove="${m.id}" data-prn-idx="${idx}" checked><span class="nm"><strong>${fmtName(m.n,"p-prn")}</strong><small>${m.d}</small></span><span class="prn-tag">as needed</span><span class="ts">${fmt(ts)}</span></label></div>`
+    html:`<div class="slot all prn-slot"><div class="sh"><b>${fmt(ts)}</b><span>As needed · logged (Day ${curDay})</span></div><label class="row on"><input type="checkbox" data-prn-remove="${m.id}" data-prn-idx="${idx}" checked><span class="nm"><strong>${fmtName(m.n,"p-prn")}</strong><small>${m.d}</small></span><span class="prn-tag">as needed</span><span class="ts">${fmt(ts)}</span></label></div>`
    });
   });
   if(L.length){
@@ -305,51 +375,87 @@ function render(){
 
  entries.sort((a,b)=>a.sortM-b.sortM);
  let h=entries.map(e=>e.html).join("");
- if(packDay()>6)h+='<div class="prn"><b>Medrol pack finished</b><small>All 21 tablets are done.</small></div>';
+ if(curDay>6)h+='<div class="prn"><b>Medrol pack finished</b><small>All 21 Medrol tablets are completed on Days 1–6.</small></div>';
  document.getElementById("slots").innerHTML=h;
- document.getElementById("fill").style.width=(n/total()*100)+"%";
- document.getElementById("prog").textContent=n+" / "+total()+" scheduled doses taken";
+ const tot=totalForDay(curDay);
+ document.getElementById("fill").style.width=(n/tot*100)+"%";
+ document.getElementById("prog").textContent=`Day ${curDay}: ${n} / ${tot} scheduled doses taken`;
 }
 
 function logPrnDose(id){
- (S.prn[id]=S.prn[id]||[]).push(Date.now());
+ const cur=dayData(STORE.activeDay);
+ (cur.prn[id]=cur.prn[id]||[]).push(Date.now());
  save();
  render();
 }
 
 document.addEventListener("change",e=>{
  const t=e.target;
- if(!t||!t.dataset)return;
+ if(!t)return;
+ if(t.id==="day"){
+  STORE.activeDay=Math.min(Math.max(+t.value||1,1),7);
+  save();
+  render();
+  return;
+ }
+ if(!t.dataset)return;
+ const cur=dayData(STORE.activeDay);
  if(t.dataset.id){
   const id=t.dataset.id;
-  if(t.checked)S.done[id]=Date.now();else delete S.done[id];
+  if(t.checked)cur.done[id]=Date.now();else delete cur.done[id];
   save();render();
  }else if(t.dataset.prnCheck){
   if(t.checked)logPrnDose(t.dataset.prnCheck);
  }else if(t.dataset.prnRemove!==undefined){
   const id=t.dataset.prnRemove;
   const idx=+t.dataset.prnIdx;
-  if(S.prn[id]&&!isNaN(idx)){
-   S.prn[id].splice(idx,1);
+  if(cur.prn[id]&&!isNaN(idx)){
+   cur.prn[id].splice(idx,1);
    save();render();
   }
  }
 });
+
 document.addEventListener("click",e=>{
  const prnEl=e.target.closest("[data-prn]");
  if(prnEl){logPrnDose(prnEl.dataset.prn);return;}
  const undoEl=e.target.closest("[data-undo]");
  if(undoEl){
+  const cur=dayData(STORE.activeDay);
   const id=undoEl.dataset.undo;
-  if(S.prn[id])S.prn[id].pop();
+  if(cur.prn[id])cur.prn[id].pop();
   save();render();
  }
 });
-document.getElementById("reset").onclick=()=>{if(confirm("Clear everything checked today?")){S={date:today(),done:{},prn:{}};save();render()}};
-(function(){const d=document.getElementById("day");let o="";for(let i=1;i<=6;i++)o+=`<option value="${i}">Day ${i}</option>`;o+='<option value="7">Finished</option>';d.innerHTML=o;
- d.onchange=()=>{START=mid()-(+d.value-1)*864e5;try{localStorage.setItem(PK,START)}catch(e){}render()}})();
+
+document.getElementById("reset").onclick=()=>{
+ const d=STORE.activeDay;
+ if(confirm(`Clear all checked and slated doses for Day ${d}?`)){
+  STORE.days[String(d)]={done:{},prn:{}};
+  save();render();
+ }
+};
+
+document.getElementById("reset-all").onclick=()=>{
+ if(confirm("Clear saved memory for ALL days (Days 1–7)?")){
+  STORE={activeDay:1,lastDate:today(),days:emptyDays()};
+  try{localStorage.removeItem(LEGACY_KEY)}catch(e){}
+  save();render();
+ }
+};
+
+save();
 render();
-setInterval(()=>{if(S.date!==today()){S={date:today(),done:{},prn:{}};save()}render()},60000);
+
+setInterval(()=>{
+ if(STORE.lastDate!==today()){
+  STORE.lastDate=today();
+  if(STORE.activeDay<7)STORE.activeDay+=1;
+  save();
+ }
+ render();
+},60000);
+
 if("serviceWorker" in navigator&&(location.protocol==="https:"||location.protocol==="http:")){
  window.addEventListener("load",()=>{
   navigator.serviceWorker.register("./sw.js").then(()=>navigator.serviceWorker.ready).then(()=>{

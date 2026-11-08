@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `chat_summary.html` documenting the iPhone web app troubleshooting and deployment workflow.
 - Password lock screen (`SHA-256` verification with persistent `localStorage` unlock state) on `index.html` and `Medication Tracker.html`.
 
+### Fixed
+- Fixed day selector dropdown (`#day`) so each day (`Day 1` through `Day 7`) stores its own isolated `done` checkmarks and `prn` slated doses in `localStorage` (`medtracker-days-v2`), preventing Day 1 checkmarks from bleeding into Days 2–7 and preserving per-day memory across sessions.
+
 ### Changed
 - Enhanced `Medication Tracker.html` with automatic local file preview detection to break out of iOS Quick Look into Safari and preserve `localStorage` state.
 - Updated `sw.js` Service Worker to ignore non-200 responses, ensuring the installed iPhone Home Screen app continues working offline even after the GitHub repository is made private.
