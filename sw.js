@@ -1,4 +1,4 @@
-const CACHE_NAME = 'medtracker-pwa-v5';
+const CACHE_NAME = 'medtracker-pwa-v6';
 const ASSETS = [
   './',
   './index.html',

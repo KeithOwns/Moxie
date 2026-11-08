@@ -18,4 +18,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced `Medication Tracker.html` with automatic local file preview detection to break out of iOS Quick Look into Safari and preserve `localStorage` state.
 - Updated `sw.js` Service Worker to ignore non-200 responses, ensuring the installed iPhone Home Screen app continues working offline even after the GitHub repository is made private.
 - Removed dosage mass (mg) from medication titles and added short purpose labels next to each medication name in `index.html` and `Medication Tracker.html`.
+- Color-coded medication `[purpose]` labels (yellow for non-food scheduled meds, orange for take-with-food meds, red for as-needed PRN meds) and compacted vertical spacing across `index.html` and `Medication Tracker.html`.
 
