@@ -49,13 +49,23 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 a.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
 .bar{height:6px;background:var(--line);border-radius:4px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:var(--done);transition:width .3s}
-.meta-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0 8px;font-size:12.5px}
+.meta-row{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:5px 0 6px;font-size:12.5px}
 .prog{color:var(--muted)}
 .packbar{white-space:nowrap}.packbar select{font:inherit;padding:2px 6px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+h2{font-size:13.5px;margin:6px 0 4px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.prn{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 10px;margin-bottom:5px}
+.prn-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.prn-info{flex:1;min-width:0;cursor:pointer}
+.prn b{display:block;font-size:13.5px}.prn small{color:var(--muted);display:block;font-size:11.5px;line-height:1.15}
+.prn-btns{display:flex;gap:4px;flex:none}
+button{font:12.5px/1.1 inherit;border:0;border-radius:8px;padding:6px 10px;background:var(--accent);color:#fff;min-height:30px}
+button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.log{font-size:11.5px;margin-top:3px;line-height:1.2}.log .w{color:var(--warn)}
 .slot{background:var(--card);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;overflow:hidden}
 .slot.all{border-color:var(--done)}
+.slot.prn-slot{border-style:dashed}
 .sh{display:flex;justify-content:space-between;align-items:baseline;padding:4px 10px;border-bottom:1px solid var(--line);background:rgba(128,128,128,.04)}
-.sh b{font-size:14.5px}.sh span{color:var(--muted);font-size:12px}
+.sh b{font-size:14px}.sh span{color:var(--muted);font-size:11.5px}
 label.row{display:flex;gap:8px;align-items:center;padding:5px 10px;min-height:32px}
 label.row+label.row{border-top:1px solid var(--line)}
 label.row.on{background:var(--donebg)}
@@ -66,16 +76,8 @@ input[type=checkbox]{width:20px;height:20px;accent-color:var(--done);flex:none;m
 .p-prn{color:var(--p-red);font-weight:700}
 .row.on .nm strong{text-decoration:line-through;opacity:.7}
 .ts{color:var(--done);font-size:11.5px;white-space:nowrap}
-h2{font-size:14.5px;margin:10px 0 5px}
-.prn{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 10px;margin-bottom:6px}
-.prn-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.prn-info{flex:1;min-width:0}
-.prn b{display:block;font-size:13.5px}.prn small{color:var(--muted);display:block;font-size:11.5px;line-height:1.15}
-.prn-btns{display:flex;gap:4px;flex:none}
-button{font:12.5px/1.1 inherit;border:0;border-radius:8px;padding:6px 10px;background:var(--accent);color:#fff;min-height:32px}
-button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
-.log{font-size:11.5px;margin-top:4px;line-height:1.2}.log .w{color:var(--warn)}
 .fd{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 5px;color:var(--p-orange);white-space:nowrap}
+.prn-tag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 5px;color:var(--p-red);white-space:nowrap}
 .note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.25}
 .foot-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 </style>
@@ -104,9 +106,10 @@ button.ghost{background:transparent;color:var(--muted);border:1px solid var(--li
  <div class="prog" id="prog"></div>
  <div class="packbar">Medrol: <select id="day"></select></div>
 </div>
-<div id="slots"></div>
-<h2>As needed</h2>
+<h2>As needed (tap to slate into today’s schedule)</h2>
 <div id="prn"></div>
+<h2>Daily schedule</h2>
+<div id="slots"></div>
 <div class="foot-actions">
  <button class="ghost" id="reset">Reset today</button>
  <button class="ghost" id="lock-btn">Lock</button>
@@ -187,14 +190,14 @@ document.getElementById("lock-btn").onclick=()=>{
 
 const TS="1 capsule · take with a snack or milk";
 const SLOTS=[
- {t:"8:00 AM",l:"Breakfast",i:[["keflex1","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["colace1","Colace - Stool softener","1 capsule · with a full glass of water",0],["jour1","Journavax - Pain relief","1 tab · with or without food",0],["medrol1","Medrol pack - Anti-inflammatory","",1,"bf"]]},
- {t:"9:00 AM",l:"",i:[["tor1","Toradol - Pain & swelling",TS,1]]},
- {t:"1:00 PM",l:"After lunch",i:[["keflex2","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["medrol2","Medrol pack - Anti-inflammatory","",1,"lunch"]]},
- {t:"3:00 PM",l:"",i:[["tor2","Toradol - Pain & swelling",TS,1]]},
- {t:"6:00 PM",l:"Dinner",i:[["keflex3","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["colace2","Colace - Stool softener","1 capsule · with a full glass of water",0],["jour2","Journavax - Pain relief","1 tab · with or without food",0],["medrol3","Medrol pack - Anti-inflammatory","",1,"supper"]]},
- {t:"9:00 PM",l:"",i:[["tor3","Toradol - Pain & swelling",TS,1]]},
- {t:"10:00 PM",l:"Bedtime",i:[["keflex4","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["medrol4","Medrol pack - Anti-inflammatory","",1,"bed"]]},
- {t:"3:00 AM",l:"Overnight",i:[["tor4","Toradol - Pain & swelling",TS,1]]}
+ {t:"8:00 AM",m:480,l:"Breakfast",i:[["keflex1","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["colace1","Colace - Stool softener","1 capsule · with a full glass of water",0],["jour1","Journavax - Pain relief","1 tab · with or without food",0],["medrol1","Medrol pack - Anti-inflammatory","",1,"bf"]]},
+ {t:"9:00 AM",m:540,l:"",i:[["tor1","Toradol - Pain & swelling",TS,1]]},
+ {t:"1:00 PM",m:780,l:"After lunch",i:[["keflex2","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["medrol2","Medrol pack - Anti-inflammatory","",1,"lunch"]]},
+ {t:"3:00 PM",m:900,l:"",i:[["tor2","Toradol - Pain & swelling",TS,1]]},
+ {t:"6:00 PM",m:1080,l:"Dinner",i:[["keflex3","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["colace2","Colace - Stool softener","1 capsule · with a full glass of water",0],["jour2","Journavax - Pain relief","1 tab · with or without food",0],["medrol3","Medrol pack - Anti-inflammatory","",1,"supper"]]},
+ {t:"9:00 PM",m:1260,l:"",i:[["tor3","Toradol - Pain & swelling",TS,1]]},
+ {t:"10:00 PM",m:1320,l:"Bedtime",i:[["keflex4","Keflex - Antibiotic","1 capsule · food helps if stomach is upset",0],["medrol4","Medrol pack - Anti-inflammatory","",1,"bed"]]},
+ {t:"3:00 AM",m:1620,l:"Overnight",i:[["tor4","Toradol - Pain & swelling",TS,1]]}
 ];
 const MED={1:{bf:2,lunch:1,supper:1,bed:2},2:{bf:1,lunch:1,supper:1,bed:2},3:{bf:1,lunch:1,supper:1,bed:1},4:{bf:1,lunch:1,bed:1},5:{bf:1,bed:1},6:{bf:1}};
 const KM={bf:"before breakfast, with food",lunch:"after lunch",supper:"after supper",bed:"at bedtime, with a snack"};
@@ -228,6 +231,11 @@ function fmtName(str,cls){
  if(idx===-1)return str;
  return `${str.slice(0,idx)} - <span class="${cls}">${str.slice(idx+3)}</span>`;
 }
+function sortMinutesFromTs(ts){
+ const d=new Date(ts);
+ const mins=d.getHours()*60+d.getMinutes();
+ return mins<300?mins+1440:mins;
+}
 
 (function initEnvBanner(){
  const el=document.getElementById("env-banner");
@@ -246,35 +254,97 @@ function fmtName(str,cls){
 function render(){
  const dsel=document.getElementById("day");dsel.value=String(Math.min(Math.max(packDay(),1),7));
  document.getElementById("date").textContent=new Date().toLocaleDateString([],{weekday:"short",month:"short",day:"numeric"});
- let n=0,h="";
- SLOTS.forEach(s=>{
- const it=items(s);if(!it.length)return;
- const c=it.filter(x=>S.done[x[0]]).length;n+=c;
- h+=`<div class="slot ${c===it.length?"all":""}"><div class="sh"><b>${s.t}</b><span>${s.l}</span></div>`;
- it.forEach(x=>{const d=S.done[x[0]];
- let desc=x[2];if(x[4]){const q=medN(x[4]);desc=`${q} tablet${q>1?"s":""} · pack day ${packDay()}, ${KM[x[4]]}`}
- const pCls=x[3]?"p-food":"p-nofood";
- h+=`<label class="row ${d?"on":""}"><input type="checkbox" data-id="${x[0]}" ${d?"checked":""}><span class="nm"><strong>${fmtName(x[1],pCls)}</strong><small>${desc}</small></span>${x[3]?'<span class="fd">🍽 food</span>':""}${d?`<span class="ts">${fmt(d)}</span>`:""}</label>`});
- h+="</div>";
+
+ // Render As-Needed controls at top
+ let p="";
+ PRN.forEach(m=>{
+  const L=S.prn[m.id]||[];const last=L[L.length-1];
+  let st="";
+  if(last){const nx=last+6*3600e3;st=`Last: ${fmt(last)} · `+(Date.now()>=nx?"OK to take again":`<span class="w">next eligible at ${fmt(nx)}</span>`)}
+  p+=`<div class="prn"><div class="prn-top"><div class="prn-info" data-prn="${m.id}"><b>${fmtName(m.n,"p-prn")}</b><small>${m.d}</small></div><div class="prn-btns"><button data-prn="${m.id}">+ Slate now</button>${L.length?`<button class="ghost" data-undo="${m.id}">Undo</button>`:""}</div></div>${st?`<div class="log">${st}</div>`:""}</div>`;
  });
+ document.getElementById("prn").innerHTML=p;
+
+ // Build chronological timeline entries combining fixed SLOTS + slated PRN doses
+ let n=0;
+ const entries=[];
+ SLOTS.forEach(s=>{
+  const it=items(s);if(!it.length)return;
+  const c=it.filter(x=>S.done[x[0]]).length;n+=c;
+  let rows="";
+  it.forEach(x=>{
+   const d=S.done[x[0]];
+   let desc=x[2];if(x[4]){const q=medN(x[4]);desc=`${q} tablet${q>1?"s":""} · pack day ${packDay()}, ${KM[x[4]]}`}
+   const pCls=x[3]?"p-food":"p-nofood";
+   rows+=`<label class="row ${d?"on":""}"><input type="checkbox" data-id="${x[0]}" ${d?"checked":""}><span class="nm"><strong>${fmtName(x[1],pCls)}</strong><small>${desc}</small></span>${x[3]?'<span class="fd">🍽 food</span>':""}${d?`<span class="ts">${fmt(d)}</span>`:""}</label>`;
+  });
+  entries.push({
+   sortM:s.m,
+   html:`<div class="slot ${c===it.length?"all":""}"><div class="sh"><b>${s.t}</b><span>${s.l}</span></div>${rows}</div>`
+  });
+ });
+
+ // Add taken PRN doses and next-eligible (6h) slated PRN slot into the chronological schedule
+ PRN.forEach(m=>{
+  const L=S.prn[m.id]||[];
+  L.forEach((ts,idx)=>{
+   entries.push({
+    sortM:sortMinutesFromTs(ts)+0.1,
+    html:`<div class="slot all prn-slot"><div class="sh"><b>${fmt(ts)}</b><span>As needed · logged</span></div><label class="row on"><input type="checkbox" data-prn-remove="${m.id}" data-prn-idx="${idx}" checked><span class="nm"><strong>${fmtName(m.n,"p-prn")}</strong><small>${m.d}</small></span><span class="prn-tag">as needed</span><span class="ts">${fmt(ts)}</span></label></div>`
+   });
+  });
+  if(L.length){
+   const last=L[L.length-1];
+   const nx=last+6*3600e3;
+   entries.push({
+    sortM:sortMinutesFromTs(nx)+0.2,
+    html:`<div class="slot prn-slot"><div class="sh"><b>${fmt(nx)}</b><span>As needed · next eligible (6h)</span></div><label class="row"><input type="checkbox" data-prn-check="${m.id}"><span class="nm"><strong>${fmtName(m.n,"p-prn")}</strong><small>Eligible 6h after ${fmt(last)} dose · tap checkbox when taken</small></span><span class="prn-tag">as needed</span></label></div>`
+   });
+  }
+ });
+
+ entries.sort((a,b)=>a.sortM-b.sortM);
+ let h=entries.map(e=>e.html).join("");
  if(packDay()>6)h+='<div class="prn"><b>Medrol pack finished</b><small>All 21 tablets are done.</small></div>';
  document.getElementById("slots").innerHTML=h;
  document.getElementById("fill").style.width=(n/total()*100)+"%";
  document.getElementById("prog").textContent=n+" / "+total()+" scheduled doses taken";
- let p="";
- PRN.forEach(m=>{
- const L=S.prn[m.id]||[];const last=L[L.length-1];
- let st="";
- if(last){const nx=last+6*3600e3;st=`Last: ${fmt(last)} · `+(Date.now()>=nx?"OK to take again":`<span class="w">next at ${fmt(nx)}</span>`)}
- p+=`<div class="prn"><div class="prn-top"><div class="prn-info"><b>${fmtName(m.n,"p-prn")}</b><small>${m.d}</small></div><div class="prn-btns"><button data-prn="${m.id}">Log dose</button>${L.length?`<button class="ghost" data-undo="${m.id}">Undo</button>`:""}</div></div>${st||L.length?`<div class="log">${st}${L.length?` · Today: ${L.map(fmt).join(", ")}`:""}</div>`:""}</div>`;
- });
- document.getElementById("prn").innerHTML=p;
 }
-document.addEventListener("change",e=>{const id=e.target.dataset&&e.target.dataset.id;if(!id)return;
- if(e.target.checked)S.done[id]=Date.now();else delete S.done[id];save();render()});
-document.addEventListener("click",e=>{const t=e.target;
- if(t.dataset.prn){(S.prn[t.dataset.prn]=S.prn[t.dataset.prn]||[]).push(Date.now());save();render()}
- if(t.dataset.undo){S.prn[t.dataset.undo].pop();save();render()}});
+
+function logPrnDose(id){
+ (S.prn[id]=S.prn[id]||[]).push(Date.now());
+ save();
+ render();
+}
+
+document.addEventListener("change",e=>{
+ const t=e.target;
+ if(!t||!t.dataset)return;
+ if(t.dataset.id){
+  const id=t.dataset.id;
+  if(t.checked)S.done[id]=Date.now();else delete S.done[id];
+  save();render();
+ }else if(t.dataset.prnCheck){
+  if(t.checked)logPrnDose(t.dataset.prnCheck);
+ }else if(t.dataset.prnRemove!==undefined){
+  const id=t.dataset.prnRemove;
+  const idx=+t.dataset.prnIdx;
+  if(S.prn[id]&&!isNaN(idx)){
+   S.prn[id].splice(idx,1);
+   save();render();
+  }
+ }
+});
+document.addEventListener("click",e=>{
+ const prnEl=e.target.closest("[data-prn]");
+ if(prnEl){logPrnDose(prnEl.dataset.prn);return;}
+ const undoEl=e.target.closest("[data-undo]");
+ if(undoEl){
+  const id=undoEl.dataset.undo;
+  if(S.prn[id])S.prn[id].pop();
+  save();render();
+ }
+});
 document.getElementById("reset").onclick=()=>{if(confirm("Clear everything checked today?")){S={date:today(),done:{},prn:{}};save();render()}};
 (function(){const d=document.getElementById("day");let o="";for(let i=1;i<=6;i++)o+=`<option value="${i}">Day ${i}</option>`;o+='<option value="7">Finished</option>';d.innerHTML=o;
  d.onchange=()=>{START=mid()-(+d.value-1)*864e5;try{localStorage.setItem(PK,START)}catch(e){}render()}})();
