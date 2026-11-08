@@ -1,4 +1,4 @@
-const CACHE_NAME = 'medtracker-pwa-v1';
+const CACHE_NAME = 'medtracker-pwa-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -23,16 +23,29 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Cache-first strategy: once installed on iPhone, works 100% offline forever
+// even if the GitHub repository is later changed to private (which returns 404).
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
-        return response;
-      })
-      .catch(() => caches.match(event.request).then(r => r || caches.match('./index.html')))
+    caches.match(event.request).then(cached => {
+      const networkUpdate = fetch(event.request)
+        .then(response => {
+          if (response && response.status === 200) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() => null);
+
+      if (cached) {
+        return cached;
+      }
+      return networkUpdate.then(resp => {
+        if (resp && resp.status === 200) return resp;
+        return caches.match('./index.html');
+      });
+    })
   );
 });
-
