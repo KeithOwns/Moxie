@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- Added maximum-scale and user-scalable to prevent iOS auto-zoom on taps -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<!-- Apple iOS Web App Meta Tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Med Tracker">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>Medication Tracker</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f5f7fa;--card:#fff;--text:#1c2430;--muted:#667085;--line:#e2e7ee;--accent:#2563eb;--done:#16a34a;--donebg:#e8f6ee;--warn:#b45309}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f141b;--card:#18202a;--text:#e8edf3;--muted:#98a2b3;--line:#2a3441;--accent:#60a5fa;--done:#4ade80;--donebg:#16301f;--warn:#fbbf24;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f141b;--card:#18202a;--text:#e8edf3;--muted:#98a2b3;--line:#2a3441;--accent:#60a5fa;--done:#4ade80;--donebg:#16301f;--warn:#fbbf24;color-scheme:dark}
+/* iOS specific touch improvements */
+* { -webkit-tap-highlight-color: transparent; }
+button, label.row, input[type=checkbox], select, a.btn { touch-action: manipulation; cursor: pointer; }
+
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:4px 0}
+.sub{color:var(--muted);font-size:14px;margin-bottom:12px}
+.banner{background:var(--card);border:2px solid var(--accent);border-radius:14px;padding:12px 14px;margin-bottom:14px;font-size:14px}
+.banner b{display:block;margin-bottom:4px;font-size:15px}
+.banner p{margin:0 0 10px;color:var(--muted)}
+.banner .actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-weight:600;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;min-height:44px;box-sizing:border-box}
+a.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--done);transition:width .3s}
+.prog{font-size:14px;color:var(--muted);margin:6px 0 16px}
+.slot{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.slot.all{border-color:var(--done)}
+.sh{display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px;border-bottom:1px solid var(--line)}
+.sh b{font-size:18px}.sh span{color:var(--muted);font-size:13px}
+label.row{display:flex;gap:12px;align-items:center;padding:12px 14px;min-height:48px}
+label.row+label.row{border-top:1px solid var(--line)}
+label.row.on{background:var(--donebg)}
+input[type=checkbox]{width:26px;height:26px;accent-color:var(--done);flex:none}
+.nm{flex:1}.nm small{display:block;color:var(--muted);font-size:13px}
+.row.on .nm strong{text-decoration:line-through;opacity:.7}
+.ts{color:var(--done);font-size:13px;white-space:nowrap}
+h2{font-size:17px;margin:20px 0 8px}
+.prn{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin-bottom:12px}
+.prn b{display:block}.prn small{color:var(--muted);display:block;margin:2px 0 8px}
+button{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);color:#fff;min-height:44px}
+button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line)}
+.log{font-size:14px;margin-top:8px}.log .w{color:var(--warn)}
+.packbar{margin-bottom:12px;font-size:15px}.packbar select{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--text)}
+.fd{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:2px 6px;color:var(--warn);white-space:nowrap}
+.note{font-size:13px;color:var(--muted);margin-top:16px}
+</style>
+</head>
+<body>
+<main>
+<div id="env-banner"></div>
+<h1>💊 Medication Tracker</h1>
+<div class="sub" id="date"></div>
+<div class="bar"><i id="fill"></i></div>
+<div class="prog" id="prog"></div>
+<div class="packbar">Medrol pack: today is <select id="day"></select></div>
+<div id="slots"></div>
+<h2>As needed</h2>
+<div id="prn"></div>
+<button class="ghost" id="reset">Reset today</button>
+<p class="note">Based on the medication sheet you photographed; check it against your original and your pharmacist’s instructions. Medrol tablet counts come from the pack’s dosing chart; set today’s pack day above. Don’t take other acetaminophen (Tylenol) products with Oxycodone-Acet.</p>
+</main>
+<script>
+const LIVE_URL="https://keithowns.github.io/Moxie/";
+const TS="1 capsule · take with a snack or milk";
+const SLOTS=[
+ {t:"8:00 AM",l:"Breakfast",i:[["keflex1","Keflex 500mg","1 capsule · food helps if stomach is upset",0],["colace1","Colace 100mg","1 capsule · with a full glass of water",0],["jour1","Journavax","1 tab · with or without food",0],["medrol1","Medrol pack","",1,"bf"]]},
+ {t:"9:00 AM",l:"",i:[["tor1","Toradol 10mg",TS,1]]},
+ {t:"1:00 PM",l:"After lunch",i:[["keflex2","Keflex 500mg","1 capsule · food helps if stomach is upset",0],["medrol2","Medrol pack","",1,"lunch"]]},
+ {t:"3:00 PM",l:"",i:[["tor2","Toradol 10mg",TS,1]]},
+ {t:"6:00 PM",l:"Dinner",i:[["keflex3","Keflex 500mg","1 capsule · food helps if stomach is upset",0],["colace2","Colace 100mg","1 capsule · with a full glass of water",0],["jour2","Journavax","1 tab · with or without food",0],["medrol3","Medrol pack","",1,"supper"]]},
+ {t:"9:00 PM",l:"",i:[["tor3","Toradol 10mg",TS,1]]},
+ {t:"10:00 PM",l:"Bedtime",i:[["keflex4","Keflex 500mg","1 capsule · food helps if stomach is upset",0],["medrol4","Medrol pack","",1,"bed"]]},
+ {t:"3:00 AM",l:"Overnight",i:[["tor4","Toradol 10mg",TS,1]]}
+];
+const MED={1:{bf:2,lunch:1,supper:1,bed:2},2:{bf:1,lunch:1,supper:1,bed:2},3:{bf:1,lunch:1,supper:1,bed:1},4:{bf:1,lunch:1,bed:1},5:{bf:1,bed:1},6:{bf:1}};
+const KM={bf:"before breakfast, with food",lunch:"after lunch",supper:"after supper",bed:"at bedtime, with a snack"};
+const PK="medpack-start";
+let START=null;
+let storageOK=false;
+try{
+ localStorage.setItem("__t","1");
+ localStorage.removeItem("__t");
+ storageOK=true;
+ START=+localStorage.getItem(PK)||null;
+}catch(e){}
+function mid(){const t=new Date();t.setHours(0,0,0,0);return t.getTime()}
+if(!START){START=mid();try{localStorage.setItem(PK,START)}catch(e){}}
+function packDay(){return Math.round((mid()-START)/864e5)+1}
+function medN(k){return (MED[packDay()]||{})[k]||0}
+function items(s){return s.i.filter(x=>!x[4]||medN(x[4])>0)}
+function total(){return SLOTS.reduce((a,s)=>a+items(s).length,0)}
+const PRN=[
+ {id:"oxy",n:"Oxycodone-Acet 5-325mg",d:"1–2 tabs, as needed, at least 6 hours apart"},
+ {id:"ond",n:"Ondansetron ODT 4mg",d:"1 tab for nausea, at least 6 hours apart"}
+];
+const KEY="medtracker-v1";
+const today=()=>new Date().toDateString();
+let S={date:today(),done:{},prn:{}};
+try{const r=JSON.parse(localStorage.getItem(KEY)||"null");if(r&&r.date===today())S=r}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const fmt=ts=>new Date(ts).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+
+(function initEnvBanner(){
+ const el=document.getElementById("env-banner");
+ const isHttp=location.protocol==="https:"||location.protocol==="http:";
+ const isIOS=/iPhone|iPad|iPod/i.test(navigator.userAgent);
+ const isStandalone=window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches;
+ if(!isHttp||!storageOK){
+  el.innerHTML=`<div class="banner"><b>📲 Viewing Local File Preview</b><p>iPhone file previews cannot save checked doses after closing. Tap below to open the live web app in Safari so your progress stays saved.</p><div class="actions"><a class="btn" href="${LIVE_URL}" target="_blank" rel="noopener">Open Live App in Safari →</a></div></div>`;
+ }else if(isIOS&&!isStandalone&&!sessionStorage.getItem("hide-a2hs")){
+  el.innerHTML=`<div class="banner"><b>📲 Install on iPhone Home Screen</b><p>Tap Safari’s <strong>Share</strong> button (↑) and choose <strong>Add to Home Screen</strong>, or install the Home Screen icon profile directly.</p><div class="actions"><a class="btn" href="Install%20Med%20Tracker%20Home%20Screen%20Icon.mobileconfig">Install Home Screen Icon</a><button class="ghost" id="dismiss-a2hs">Dismiss</button></div></div>`;
+  const btn=document.getElementById("dismiss-a2hs");
+  if(btn)btn.onclick=()=>{sessionStorage.setItem("hide-a2hs","1");el.innerHTML=""};
+ }
+})();
+
+function render(){
+ const dsel=document.getElementById("day");dsel.value=String(Math.min(Math.max(packDay(),1),7));
+ document.getElementById("date").textContent=new Date().toLocaleDateString([],{weekday:"long",month:"long",day:"numeric"});
+ let n=0,h="";
+ SLOTS.forEach(s=>{
+ const it=items(s);if(!it.length)return;
+ const c=it.filter(x=>S.done[x[0]]).length;n+=c;
+ h+=`<div class="slot ${c===it.length?"all":""}"><div class="sh"><b>${s.t}</b><span>${s.l}</span></div>`;
+ it.forEach(x=>{const d=S.done[x[0]];
+ let desc=x[2];if(x[4]){const q=medN(x[4]);desc=`${q} tablet${q>1?"s":""} · pack day ${packDay()}, ${KM[x[4]]}`}
+ h+=`<label class="row ${d?"on":""}"><input type="checkbox" data-id="${x[0]}" ${d?"checked":""}><span class="nm"><strong>${x[1]}</strong><small>${desc}</small></span>${x[3]?'<span class="fd">🍽 with food</span>':""}${d?`<span class="ts">${fmt(d)}</span>`:""}</label>`});
+ h+="</div>";
+ });
+ if(packDay()>6)h+='<div class="prn"><b>Medrol pack finished</b><small>All 21 tablets are done.</small></div>';
+ document.getElementById("slots").innerHTML=h;
+ document.getElementById("fill").style.width=(n/total()*100)+"%";
+ document.getElementById("prog").textContent=n+" of "+total()+" scheduled doses taken";
+ let p="";
+ PRN.forEach(m=>{
+ const L=S.prn[m.id]||[];const last=L[L.length-1];
+ let st="";
+ if(last){const nx=last+6*3600e3;st=`Last: ${fmt(last)} · `+(Date.now()>=nx?"OK to take again":`<span class="w">next at ${fmt(nx)}</span>`)}
+ p+=`<div class="prn"><b>${m.n}</b><small>${m.d}</small><button data-prn="${m.id}">Log a dose now</button>${L.length?` <button class="ghost" data-undo="${m.id}">Undo last</button>`:""}<div class="log">${st}${L.length?`<br>Today: ${L.map(fmt).join(", ")}`:""}</div></div>`;
+ });
+ document.getElementById("prn").innerHTML=p;
+}
+document.addEventListener("change",e=>{const id=e.target.dataset&&e.target.dataset.id;if(!id)return;
+ if(e.target.checked)S.done[id]=Date.now();else delete S.done[id];save();render()});
+document.addEventListener("click",e=>{const t=e.target;
+ if(t.dataset.prn){(S.prn[t.dataset.prn]=S.prn[t.dataset.prn]||[]).push(Date.now());save();render()}
+ if(t.dataset.undo){S.prn[t.dataset.undo].pop();save();render()}});
+document.getElementById("reset").onclick=()=>{if(confirm("Clear everything checked today?")){S={date:today(),done:{},prn:{}};save();render()}};
+(function(){const d=document.getElementById("day");let o="";for(let i=1;i<=6;i++)o+=`<option value="${i}">Day ${i}</option>`;o+='<option value="7">Finished</option>';d.innerHTML=o;
+ d.onchange=()=>{START=mid()-(+d.value-1)*864e5;try{localStorage.setItem(PK,START)}catch(e){}render()}})();
+render();
+setInterval(()=>{if(S.date!==today()){S={date:today(),done:{},prn:{}};save()}render()},60000);
+if("serviceWorker" in navigator&&(location.protocol==="https:"||location.protocol==="http:")){
+ window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>PayloadContent</key>
+    <array>
+        <dict>
+            <key>FullScreen</key>
+            <true/>
+            <key>Icon</key>
+            <data>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</data>
+            <key>IgnoreManifestScope</key>
+            <false/>
+            <key>IsRemovable</key>
+            <true/>
+            <key>Label</key>
+            <string>Med Tracker</string>
+            <key>PayloadDescription</key>
+            <string>Installs the Medication Tracker web app onto the iPhone Home Screen.</string>
+            <key>PayloadDisplayName</key>
+            <string>Medication Tracker Web Clip</string>
+            <key>PayloadIdentifier</key>
+            <string>com.keithtibbitts.moxie.medtracker.webclip</string>
+            <key>PayloadType</key>
+            <string>com.apple.webClip.managed</string>
+            <key>PayloadUUID</key>
+            <string>8A7E5C42-3B19-4F0E-9D21-6C84A10F3E99</string>
+            <key>PayloadVersion</key>
+            <integer>1</integer>
+            <key>Precomposed</key>
+            <true/>
+            <key>URL</key>
+            <string>https://keithowns.github.io/Moxie/</string>
+        </dict>
+    </array>
+    <key>PayloadDescription</key>
+    <string>Adds the Medication Tracker standalone web app to your iPhone Home Screen.</string>
+    <key>PayloadDisplayName</key>
+    <string>Medication Tracker (iPhone App)</string>
+    <key>PayloadIdentifier</key>
+    <string>com.keithtibbitts.moxie.medtracker</string>
+    <key>PayloadOrganization</key>
+    <string>Moxie</string>
+    <key>PayloadRemovalDisallowed</key>
+    <false/>
+    <key>PayloadType</key>
+    <string>Configuration</string>
+    <key>PayloadUUID</key>
+    <string>2F4B9A11-7C30-4E88-A512-9D0E3B6C8F10</string>
+    <key>PayloadVersion</key>
+    <integer>1</integer>
+</dict>
+</plist>
